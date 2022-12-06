@@ -4,6 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 bcrypt = Bcrypt()
 db = SQLAlchemy()
 
+##############################################################################
+
 class User(db.Model):
   """User"""
 
@@ -31,20 +33,149 @@ class User(db.Model):
       nullable=False,
   )
 
-# class Hobby(db.Model):
-#   """Hobby"""
+  picture = db.Column(
+    db.Text,
+    nullable=True
+  )
 
-#   __tablename__ = 'hobbies'
+  hobbies = db.relationship(
+        "Hobby"
+    )
 
-# class Interest(db.Model):
-#   """Interest"""
+  users_with_same_hobbies = db.relationship(
+        "User",
+        secondary="user_hobbies",
+        backref="following",
+    )
 
-#   __tablename__ = 'interests'
+##############################################################################
 
-# class Location(db.Model):
-#   """Interest"""
+  """_summary_
 
-#   __tablename__ = 'locations'
+    user -< userhobbies >- hobby
+  """
+
+class UserHobbies(db.Model):
+  """Join table between users and hohbbies"""
+
+  __tablename__ = 'user_hobbies'
+
+  user_id = db.Column(
+      db.Integer,
+      db.ForeignKey('users.id'),
+      nullable=False,
+      primary_key=True,
+  )
+
+  hobby_code = db.Column(
+      db.Integer,
+      db.ForeignKey('hobbies.code'),
+      nullable=False,
+      primary_key=True,
+  )
+
+
+class Hobby(db.Model):
+  """Hobby"""
+
+  __tablename__ = 'hobbies'
+
+  code = db.Column(
+    db.Text,
+    nullable=True,
+    primary_key=True,
+  )
+
+  name = db.Column(
+    db.Text,
+    nullable=False
+  )
+
+##############################################################################
+
+"""_summary_
+
+    user -< userInterests >- interests
+  """
+
+class UserInterests(db.Model):
+  """Join table between users and hohbbies"""
+
+  __tablename__ = 'user_interests'
+
+  user_id = db.Column(
+      db.Integer,
+      db.ForeignKey('users.id'),
+      nullable=False,
+      primary_key=True,
+  )
+
+  interest_code = db.Column(
+      db.Integer,
+      db.ForeignKey('interests.code'),
+      nullable=False,
+      primary_key=True,
+  )
+
+class Interest(db.Model):
+  """Interest"""
+
+  __tablename__ = 'interests'
+
+  code = db.Column(
+    db.Text,
+    nullable=True
+    primary_key=True,
+  )
+
+  name = db.Column(
+    db.Text,
+    nullable=False
+  )
+
+##############################################################################
+
+"""_summary_
+
+    user -< userLocation >- location
+  """
+
+class UserLocation(db.Model):
+  """Join table between users and hohbbies"""
+
+  __tablename__ = 'user_locations'
+
+  user_id = db.Column(
+      db.Integer,
+      db.ForeignKey('users.id'),
+      nullable=False,
+      primary_key=True,
+  )
+
+  location_code = db.Column(
+      db.Integer,
+      db.ForeignKey('locations.code'),
+      nullable=False,
+      primary_key=True,
+  )
+
+class Location(db.Model):
+  """Interest"""
+
+  __tablename__ = 'locations'
+
+  code = db.Column(
+    db.Text,
+    nullable=True
+    primary_key=True,
+  )
+
+  name = db.Column(
+    db.Text,
+    nullable=False
+  )
+
+##############################################################################
 
 def connect_db(app):
     """Connect this database to provided Flask app.
