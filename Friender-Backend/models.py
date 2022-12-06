@@ -38,15 +38,24 @@ class User(db.Model):
     nullable=True
   )
 
+
   hobbies = db.relationship(
-        "Hobby"
+        "Hobby",
+        secondary="user_hobbies",
+        backref="users",
     )
 
-  users_with_same_hobbies = db.relationship(
-        "User",
-        secondary="user_hobbies",
-        backref="following",
-    )
+  # interests = db.relationship(
+  #       "Interests",
+  #       secondary="user_interests",
+  #       backref="user",
+  #   )
+
+  # locations = db.relationship(
+  #       "Locations",
+  #       secondary="user_locations",
+  #       backref="user",
+  #   )
 
 ##############################################################################
 
@@ -56,7 +65,7 @@ class User(db.Model):
   """
 
 class UserHobbies(db.Model):
-  """Join table between users and hohbbies"""
+  """Join table between users and hobbies"""
 
   __tablename__ = 'user_hobbies'
 
@@ -124,7 +133,7 @@ class Interest(db.Model):
 
   code = db.Column(
     db.Text,
-    nullable=True
+    nullable=True,
     primary_key=True,
   )
 
@@ -166,7 +175,7 @@ class Location(db.Model):
 
   code = db.Column(
     db.Text,
-    nullable=True
+    nullable=True,
     primary_key=True,
   )
 
