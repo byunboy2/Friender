@@ -28,15 +28,12 @@ class User(db.Model):
     nullable=False,
   )
 
-  picture = db.Column(
-    db.Text,
-    nullable=True
-  )
-
   location = db.Column(
     db.Integer,
     db.ForeignKey('locations.zip')
   )
+
+  # location = db.relationship("Location")
 
   hobbies = db.relationship(
     "Hobby",
@@ -57,14 +54,14 @@ class UserHobbies(db.Model):
   __tablename__ = 'user_hobbies'
 
   user_id = db.Column(
-    db.Integer,
-    db.ForeignKey('users.id'),
+    db.Text,
+    db.ForeignKey('users.username'),
     nullable=False,
     primary_key=True,
   )
 
   hobby_code = db.Column(
-    db.Integer,
+    db.Text,
     db.ForeignKey('hobbies.code'),
     nullable=False,
     primary_key=True,
@@ -91,40 +88,22 @@ class Hobby(db.Model):
 
 ##############################################################################
 
-  """_summary_
+#   """_summary_
 
-    user -> location >- users
-  """
+#     user -> location >- users
+#   """
 
-# class UserLocations(db.Model):
-#   """Join table between users and locations"""
+# class Location(db.Model):
+#   """Location"""
 
-#   __tablename__ = 'user_locations'
+#   __tablename__ = 'locations'
 
-#   user_id = db.Column(
+#   zip = db.Column(
 #     db.Integer,
-#     db.ForeignKey('users.id'),
-#     nullable=False,
+#     nullable=True,
 #     primary_key=True,
 #   )
 
-#   location_code = db.Column(
-#     db.Integer,
-#     db.ForeignKey('locations.code'),
-#     nullable=False,
-#     primary_key=True,
-#   )
-
-class Location(db.Model):
-  """Location"""
-
-  __tablename__ = 'locations'
-
-  zip = db.Column(
-    db.Integer,
-    nullable=True,
-    primary_key=True,
-  )
 
 ##############################################################################
 

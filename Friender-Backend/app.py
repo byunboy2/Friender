@@ -10,7 +10,8 @@ from flask import (
 #     UserAddForm, UserEditForm, LoginForm, MessageForm, CSRFProtection,
 # )
 from models import (
-    connect_db
+    connect_db,
+    db
 )
 
 load_dotenv()
@@ -22,6 +23,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
 
 connect_db(app)
+db.create_all()
 
 ##############################################################################
 
