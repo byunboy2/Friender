@@ -45,17 +45,17 @@ class User(db.Model):
         backref="users",
     )
 
-  # interests = db.relationship(
-  #       "Interests",
-  #       secondary="user_interests",
-  #       backref="user",
-  #   )
+  interests = db.relationship(
+        "Interest",
+        secondary="user_interests",
+        backref="users",
+    )
 
-  # locations = db.relationship(
-  #       "Locations",
-  #       secondary="user_locations",
-  #       backref="user",
-  #   )
+  locations = db.relationship(
+        "Location",
+        secondary="user_locations",
+        backref="users",
+    )
 
 ##############################################################################
 
@@ -85,7 +85,9 @@ class UserHobbies(db.Model):
 
 
 class Hobby(db.Model):
-  """Hobby"""
+  """Hobby
+    backref: users -> User
+  """
 
   __tablename__ = 'hobbies'
 
@@ -127,7 +129,9 @@ class UserInterests(db.Model):
   )
 
 class Interest(db.Model):
-  """Interest"""
+  """Interest
+    backref: users -> User
+  """
 
   __tablename__ = 'interests'
 
@@ -169,7 +173,9 @@ class UserLocation(db.Model):
   )
 
 class Location(db.Model):
-  """Interest"""
+  """Interest
+    backref: users -> User
+  """
 
   __tablename__ = 'locations'
 
