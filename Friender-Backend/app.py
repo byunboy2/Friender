@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 from flask import (
-    Flask, render_template, request, flash, redirect, session, g, abort
+    Flask, request, redirect, session, g
 )
 # from flask_debugtoolbar import DebugToolbarExtension
 
@@ -10,13 +10,14 @@ from flask import (
 #     UserAddForm, UserEditForm, LoginForm, MessageForm, CSRFProtection,
 # )
 from models import (
-    db, connect_db, User)
+    connect_db
+)
 
 load_dotenv()
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///sqla_intro'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DB_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
 
