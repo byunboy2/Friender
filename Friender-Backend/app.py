@@ -82,39 +82,28 @@ def upload_file():
         #     logging.error(e)
         # return False
 
+# test route for creating a user
+@app.post('/newuser', methods=["GET", "POST"])
+def create_newuser():
+    """Create a new user, test..."""
+    
+    if request.method == 'GET':
+        return render_template('newuser.html')
 
+    username = request.args.get('username')
+    email = request.args.get('email')
+    password = request.args.get('password')
+    file = request.files['file']
 
-# generate_presigned_url(ClientMethod, Params=None, ExpiresIn=3600, HttpMethod=None)
-# Generate a presigned url given a client, its method, and arguments
+    s3.upload_fileobj(file, os.environ["bucket_name"], file.filename,{"ContentDisposition":"inline",
+        "ContentType":"*"})
+    image = f"https://danielchrisrithmprojectfriender.s3.us-west-1.amazonaws.com/{file.filename}"
 
-# Parameters
-# ClientMethod (string) -- The client method to presign for
-# Params (dict) -- The parameters normally passed to ClientMethod.
-# ExpiresIn (int) -- The number of seconds the presigned url is valid for. By default it expires in an hour (3600 seconds)
-# HttpMethod (string) -- The http method to use on the generated url. By default, the http method is whatever is used in the method's model.
-# Returns
-# The presigned url
-# def upload_file(file_name, bucket, object_name=None):
-#     """Upload a file to an S3 bucket
+    user = User(username=username, email=email, password=password, image=image)
+    db.session.add(user)
+    db.session.commit()
 
-#     :param file_name: File to upload
-#     :param bucket: Bucket to upload to
-#     :param object_name: S3 object name. If not specified then file_name is used
-#     :return: True if file was uploaded, else False
-#     """
-
-#     # If S3 object_name was not specified, use file_name
-#     if object_name is None:
-#         object_name = os.path.basename(file_name)
-
-#     # Upload the file
-#     s3_client = boto3.client('s3')
-#     try:
-#         response = s3_client.upload_file(file_name, bucket, object_name)
-#     except ClientError as e:
-#         logging.error(e)
-#         return False
-#     return True
+    return f"{username} was successfully created."
 
 
 ##############################################################################
