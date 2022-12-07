@@ -28,6 +28,11 @@ class User(db.Model):
     nullable=False,
   )
 
+  image = db.Column(
+    db.Text,
+    nullable=True,
+  )
+
   # location = db.Column(
   #   db.Integer,
   #   db.ForeignKey('locations.zip')

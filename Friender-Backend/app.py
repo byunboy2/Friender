@@ -72,14 +72,28 @@ def upload_file():
         # overwrites if have same name
         # f.save(f.filename)
         # try:
-        s3.upload_fileobj(f, os.environ["bucket_name"], f.filename)
+        s3.upload_fileobj(f, os.environ["bucket_name"], f.filename,{"ContentDisposition":"inline",
+        "ContentType":"*"})
         # os.remove(f.filename)
+        image = f"https://danielchrisrithmprojectfriender.s3.us-west-1.amazonaws.com/{f.filename}"
+        print(image)
         return 'file uploaded successfully'
         # except ClientError as e:
         #     logging.error(e)
         # return False
 
 
+
+# generate_presigned_url(ClientMethod, Params=None, ExpiresIn=3600, HttpMethod=None)
+# Generate a presigned url given a client, its method, and arguments
+
+# Parameters
+# ClientMethod (string) -- The client method to presign for
+# Params (dict) -- The parameters normally passed to ClientMethod.
+# ExpiresIn (int) -- The number of seconds the presigned url is valid for. By default it expires in an hour (3600 seconds)
+# HttpMethod (string) -- The http method to use on the generated url. By default, the http method is whatever is used in the method's model.
+# Returns
+# The presigned url
 # def upload_file(file_name, bucket, object_name=None):
 #     """Upload a file to an S3 bucket
 
