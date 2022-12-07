@@ -1,7 +1,7 @@
-from flask_bcrypt import Bcrypt
+# from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 
-bcrypt = Bcrypt()
+# bcrypt = Bcrypt()
 db = SQLAlchemy()
 
 ##############################################################################
@@ -28,10 +28,10 @@ class User(db.Model):
     nullable=False,
   )
 
-  location = db.Column(
-    db.Integer,
-    db.ForeignKey('locations.zip')
-  )
+  # location = db.Column(
+  #   db.Integer,
+  #   db.ForeignKey('locations.zip')
+  # )
 
   # location = db.relationship("Location")
 
@@ -41,6 +41,15 @@ class User(db.Model):
     backref="users",
   )
 
+  @classmethod
+  def get_all_users(cls):
+    return User.query.all()
+
+
+  def serialize_user(self):
+    dict = self.__dict__
+    del dict["_sa_instance_state"]
+    return dict
 ##############################################################################
 
   """_summary_
@@ -53,7 +62,7 @@ class UserHobbies(db.Model):
 
   __tablename__ = 'user_hobbies'
 
-  user_id = db.Column(
+  username = db.Column(
     db.Text,
     db.ForeignKey('users.username'),
     nullable=False,
@@ -81,10 +90,6 @@ class Hobby(db.Model):
     primary_key=True,
   )
 
-  name = db.Column(
-    db.Text,
-    nullable=False
-  )
 
 ##############################################################################
 

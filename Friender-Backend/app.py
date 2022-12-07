@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 
 from flask import (
-    Flask, request, redirect, session, g
+    Flask, request, redirect, session, g, jsonify
 )
 # from flask_debugtoolbar import DebugToolbarExtension
 
@@ -11,7 +11,8 @@ from flask import (
 # )
 from models import (
     connect_db,
-    db
+    db,
+    User
 )
 
 load_dotenv()
@@ -35,4 +36,7 @@ db.create_all()
 
 @app.get('/')
 def test():
-  return "hello"
+
+    results = [u.serialize_user() for u in User.get_all_users()]
+
+    return jsonify(results)
