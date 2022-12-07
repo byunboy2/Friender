@@ -2,13 +2,14 @@ import os
 from dotenv import load_dotenv
 import boto3
 s3_client = boto3.client('s3')
-
+from flask_bcrypt import Bcrypt
 
 # from werkzeug import secure_filename
 
 from flask import (
     Flask, request, redirect, session, g, jsonify, render_template
 )
+
 # from flask_debugtoolbar import DebugToolbarExtension
 
 # from forms import (
@@ -25,6 +26,7 @@ from models import (
 load_dotenv()
 
 app = Flask(__name__)
+bcrypt = Bcrypt(app)
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DB_URL")
@@ -83,23 +85,24 @@ def upload_file():
         # return False
 
 # test route for creating a user
-@app.post('/newuser', methods=["GET", "POST"])
+@app.route('/newuser', methods=["GET", "POST"])
 def create_newuser():
     """Create a new user, test..."""
-    
+
     if request.method == 'GET':
         return render_template('newuser.html')
 
-    username = request.args.get('username')
-    email = request.args.get('email')
-    password = request.args.get('password')
+    username = request.form.get('username')
+    print(request.args)
+    email = request.form.get('email')
+    password = request.form.get('password')
     file = request.files['file']
 
     s3.upload_fileobj(file, os.environ["bucket_name"], file.filename,{"ContentDisposition":"inline",
         "ContentType":"*"})
     image = f"https://danielchrisrithmprojectfriender.s3.us-west-1.amazonaws.com/{file.filename}"
 
-    user = User(username=username, email=email, password=password, image=image)
+    user = User(username=username, email=email, password=bcrypt.generate_password_hash(password), image=image)
     db.session.add(user)
     db.session.commit()
 
@@ -112,5 +115,5 @@ def create_newuser():
 def test():
 
     results = [u.serialize_user() for u in User.get_all_users()]
-
+    User.filter 
     return jsonify(results)
