@@ -72,16 +72,13 @@ def upload_file():
         # overwrites if have same name
         # f.save(f.filename)
         # try:
-        response = s3.upload_fileobj(f, os.environ["bucket_name"], f)
-        os.remove(f.filename)
+        s3.upload_fileobj(f, os.environ["bucket_name"], f.filename)
+        # os.remove(f.filename)
         return 'file uploaded successfully'
         # except ClientError as e:
         #     logging.error(e)
         # return False
 
-@app.get('/get')
-def read_file():
-    s3.
 
 # def upload_file(file_name, bucket, object_name=None):
 #     """Upload a file to an S3 bucket
