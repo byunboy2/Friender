@@ -44,11 +44,27 @@ class User(db.Model):
 
   # location = db.relationship("Location")
 
-  # hobbies = db.relationship(
-  #   "Hobby",
-  #   secondary="user_hobbies",
-  #   backref="users",
-  # )
+  hobbies = db.relationship(
+    "Hobby",
+    secondary="user_hobbies",
+    backref="users",
+  )
+
+  users_with_same_hobbies = db.relationship(
+        "User",
+        secondary="user_hobbies",
+        primaryjoin=(UserHobbies.hobby_code == id),
+        secondaryjoin=(User.username == id),
+        backref="following",
+    )
+
+    followers = db.relationship(
+        "User",
+        secondary="follows",
+        primaryjoin=(Follows.user_being_followed_id == id),
+        secondaryjoin=(Follows.user_following_id == id),
+        backref="following",
+    )
 
   @classmethod
   def signup(cls, username, email, password, image_url=DEFAULT_IMAGE_URL):
@@ -98,12 +114,9 @@ class User(db.Model):
   #   dict = self.__dict__
   #   del dict["_sa_instance_state"]
   #   return dict
+
 ##############################################################################
 
-  """_summary_
-
-    user -< userhobbies >- hobby
-  """
 
 class UserHobbies(db.Model):
   """Join table between users and hobbies"""
@@ -137,6 +150,8 @@ class Hobby(db.Model):
     nullable=True,
     primary_key=True,
   )
+
+
 
 
 ##############################################################################
