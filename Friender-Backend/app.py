@@ -1,7 +1,10 @@
 import os
 from dotenv import load_dotenv
 import boto3
+from flask_jwt_extended import JWTManager, jwt_required, create_access_token
+
 s3_client = boto3.client('s3')
+
 from flask_bcrypt import Bcrypt
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import exc
@@ -12,6 +15,8 @@ import sys
 from flask import (
     Flask, request, redirect, session, g, jsonify, render_template
 )
+
+
 
 # from flask_debugtoolbar import DebugToolbarExtension
 
@@ -33,13 +38,15 @@ bcrypt = Bcrypt(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DB_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
+app.config['JWT_SECRET_KEY'] = 'super-secret'   
+
+jwt = JWTManager(app)
 
 
 connect_db(app)
 
 
 ################################################################# AWS IMPORTS
-
 
 s3 = boto3.client(
   "s3",
@@ -105,8 +112,73 @@ def create_newuser():
     except exc.IntegrityError:
         print("This should be printed")
         sys.exit(1)
-    
 
+##############################################################################
+
+##############################################################################
+# login/register
+
+@app.post('/register')
+def register():
+    """Register the user"""
+
+    # get the user data off the form
+    username = request.form.get('username')
+    password = request.form.get('password')
+    email = request.form.get('email')
+    # get the image file
+    image = request.files['image']
+
+    try:
+        hashed_password = bcrypt.generate_password_hash(password)
+        # try adding the user
+        user = User(username=username, email=email, password=hashed_password, image=image)
+        db.session.add(user)
+        db.session.commit()
+        # add to AWS
+        s3.upload_fileobj(image, os.environ["bucket_name"], username,{"ContentDisposition":"inline",
+        "ContentType":"*"})
+        # create a token
+        token = create_access_token(identity=username)
+        # return the token
+        return jsonify({"token": token})
+    except:
+        # TODO:
+        return 'Something went wrong'
+
+@app.post("/login")
+def login():
+    """Login the user"""
+
+    try:
+        # get the user info
+        username = request.form.get('username')
+        password = request.form.get('password')
+        # check that user exists
+        user = User.query.filter_by(username=username).first()
+        # compare the password against the hashed password
+        is_auth = bcrypt.check_password_hash(user.password, password)
+        # return the token
+        if user and is_auth:
+            token = create_access_token(identity=username)
+            return jsonify({"token": token})
+        
+        # TODO: 
+        return "Username and/or password is not a match"
+    except:
+        # TODO:
+        return 'Something went wrong'
+
+##############################################################################
+# all other routes / protected routes
+# all other routes need @jwt_required
+
+
+##############################################################################
+##############################################################################
+##############################################################################
+##############################################################################
+##############################################################################
 ##############################################################################
 
 @app.get('/')
