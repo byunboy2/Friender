@@ -1,7 +1,10 @@
 import os
 from dotenv import load_dotenv
 import boto3
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token
+from flask_jwt_extended import (JWTManager, create_access_token,
+create_refresh_token
+,get_raw_jwt)
+from datetime import timedelta
 
 s3_client = boto3.client('s3')
 
@@ -15,8 +18,6 @@ import sys
 from flask import (
     Flask, request, redirect, session, g, jsonify, render_template
 )
-
-
 
 # from flask_debugtoolbar import DebugToolbarExtension
 
@@ -38,9 +39,11 @@ bcrypt = Bcrypt(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DB_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
-app.config['JWT_SECRET_KEY'] = 'super-secret'   
+app.config['JWT_SECRET_KEY'] = 'super-secret'
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=60)
 
 jwt = JWTManager(app)
+blacklist = set()
 
 
 connect_db(app)
@@ -116,7 +119,8 @@ def create_newuser():
 ##############################################################################
 
 ##############################################################################
-# login/register
+# login/register/logout
+
 
 @app.post('/register')
 def register():
@@ -130,21 +134,21 @@ def register():
     image = request.files['image']
 
     try:
-        hashed_password = bcrypt.generate_password_hash(password)
         # try adding the user
-        user = User(username=username, email=email, password=hashed_password, image=image)
-        db.session.add(user)
+        User.signup(username=username, email=email, password=password, image=image)
         db.session.commit()
         # add to AWS
         s3.upload_fileobj(image, os.environ["bucket_name"], username,{"ContentDisposition":"inline",
         "ContentType":"*"})
         # create a token
         token = create_access_token(identity=username)
+
         # return the token
         return jsonify({"token": token})
-    except:
+    except IntegrityError:
         # TODO:
-        return 'Something went wrong'
+        raise IntegrityError("Username or email already exists in database!")
+
 
 @app.post("/login")
 def login():
@@ -154,20 +158,22 @@ def login():
         # get the user info
         username = request.form.get('username')
         password = request.form.get('password')
+        user = User.authenticate(username=username, password=password)
         # check that user exists
-        user = User.query.filter_by(username=username).first()
+        # user = User.query.filter_by(username=username).first()
         # compare the password against the hashed password
-        is_auth = bcrypt.check_password_hash(user.password, password)
+        # is_auth = bcrypt.check_password_hash(user.password, password)
         # return the token
-        if user and is_auth:
+        if not user:
             token = create_access_token(identity=username)
             return jsonify({"token": token})
-        
-        # TODO: 
-        return "Username and/or password is not a match"
-    except:
+
         # TODO:
-        return 'Something went wrong'
+        return "Username and/or password is not a match"
+    except Exception:
+        # TODO:
+        raise Exception("Invalid credentials.")
+
 
 ##############################################################################
 # all other routes / protected routes
