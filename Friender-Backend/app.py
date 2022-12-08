@@ -1,9 +1,7 @@
 import os
 from dotenv import load_dotenv
 import boto3
-from flask_jwt_extended import (JWTManager, create_access_token,
-create_refresh_token
-,get_raw_jwt)
+from flask_jwt_extended import (JWTManager, create_access_token)
 from datetime import timedelta
 
 s3_client = boto3.client('s3')
@@ -18,6 +16,8 @@ import sys
 from flask import (
     Flask, request, redirect, session, g, jsonify, render_template
 )
+
+from forms import LoginForm, RegisterForm
 
 # from flask_debugtoolbar import DebugToolbarExtension
 
@@ -126,53 +126,61 @@ def create_newuser():
 def register():
     """Register the user"""
 
-    # get the user data off the form
-    username = request.form.get('username')
-    password = request.form.get('password')
-    email = request.form.get('email')
-    # get the image file
-    image = request.files['image']
+    form = RegisterForm()
 
-    try:
-        # try adding the user
-        User.signup(username=username, email=email, password=password, image=image)
-        db.session.commit()
-        # add to AWS
-        s3.upload_fileobj(image, os.environ["bucket_name"], username,{"ContentDisposition":"inline",
-        "ContentType":"*"})
-        # create a token
-        token = create_access_token(identity=username)
+    if form.validate_on_submit():
+            
+        # get the user data off the form
+        username = request.form.get('username')
+        password = request.form.get('password')
+        email = request.form.get('email')
+        # get the image file
+        image = request.files['image']
 
-        # return the token
-        return jsonify({"token": token})
-    except IntegrityError:
-        # TODO:
-        raise IntegrityError("Username or email already exists in database!")
+        try:
+            # try adding the user
+            User.signup(username=username, email=email, password=password, image_url=image)
+            db.session.commit()
+            # add to AWS
+            s3.upload_fileobj(image, os.environ["bucket_name"], username,{"ContentDisposition":"inline",
+            "ContentType":"*"})
+            # create a token
+            token = create_access_token(identity=username)
+
+            # return the token
+            return jsonify({"token": token})
+        except IntegrityError:
+            # TODO:
+            raise IntegrityError("Username or email already exists in database!")
 
 
 @app.post("/login")
 def login():
     """Login the user"""
 
-    try:
-        # get the user info
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user = User.authenticate(username=username, password=password)
-        # check that user exists
-        # user = User.query.filter_by(username=username).first()
-        # compare the password against the hashed password
-        # is_auth = bcrypt.check_password_hash(user.password, password)
-        # return the token
-        if not user:
-            token = create_access_token(identity=username)
-            return jsonify({"token": token})
+    form = LoginForm()
 
-        # TODO:
-        return "Username and/or password is not a match"
-    except Exception:
-        # TODO:
-        raise Exception("Invalid credentials.")
+    if form.validate_on_submit():
+
+        try:
+            # get the user info
+            username = request.form.get('username')
+            password = request.form.get('password')
+            user = User.authenticate(username=username, password=password)
+            # check that user exists
+            # user = User.query.filter_by(username=username).first()
+            # compare the password against the hashed password
+            # is_auth = bcrypt.check_password_hash(user.password, password)
+            # return the token
+            if user:
+                token = create_access_token(identity=username)
+                return jsonify({"token": token})
+
+            # TODO:
+            return "Username and/or password is not a match"
+        except Exception:
+            # TODO:
+            raise Exception("Invalid credentials.")
 
 
 ##############################################################################
