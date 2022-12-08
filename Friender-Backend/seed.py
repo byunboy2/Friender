@@ -62,8 +62,20 @@ user_hobby3 =  UserHobbies(
     hobby_code = "golf"
 )
 
+user_hobby4 =  UserHobbies(
+    username = "jonathon",
+    hobby_code = "soccer"
+)
 
-db.session.add_all([user_hobby1 ,user_hobby2,user_hobby3])
+user_hobby5 =  UserHobbies(
+    username = "jonathon",
+    hobby_code = "basketball"
+)
+
+
+
+
+db.session.add_all([user_hobby1 ,user_hobby2,user_hobby3,user_hobby4,user_hobby5])
 db.session.commit()
 
 

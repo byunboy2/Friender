@@ -1,3 +1,16 @@
+from models import (
+    connect_db,
+    db,
+    User
+)
+from forms import LoginForm, RegisterForm
+from flask import (
+    Flask, request, redirect, session, g, jsonify, render_template
+)
+import sys
+from sqlalchemy import exc
+from sqlalchemy.exc import IntegrityError
+from flask_bcrypt import Bcrypt
 import os
 from dotenv import load_dotenv
 import boto3
@@ -6,29 +19,15 @@ from datetime import timedelta
 
 s3_client = boto3.client('s3')
 
-from flask_bcrypt import Bcrypt
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy import exc
-import sys
 
 # from werkzeug import secure_filename
 
-from flask import (
-    Flask, request, redirect, session, g, jsonify, render_template
-)
-
-from forms import LoginForm, RegisterForm
 
 # from flask_debugtoolbar import DebugToolbarExtension
 
 # from forms import (
 #     UserAddForm, UserEditForm, LoginForm, MessageForm, CSRFProtection,
 # )
-from models import (
-    connect_db,
-    db,
-    User
-)
 
 load_dotenv()
 
@@ -49,33 +48,42 @@ blacklist = set()
 connect_db(app)
 
 
-################################################################# AWS IMPORTS
+# AWS IMPORTS
 
 s3 = boto3.client(
-  "s3",
-  "us-west-1",
-  aws_access_key_id=os.environ['aws_access_key_id'],
-  aws_secret_access_key=os.environ["aws_secret_access_key"],
+    "s3",
+    "us-west-1",
+    aws_access_key_id=os.environ['aws_access_key_id'],
+    aws_secret_access_key=os.environ["aws_secret_access_key"],
 )
 
 ##############################################################################
 # TEST ROUTE FOR UPLOADING
+
+
+@app.get('/test')
+def get_distance():
+    print(">>>>>>>>>> this is the distance",User.caculate_distance_between_zip(21206, 48237))
+    return "this was a test"
+
+
 @app.get('/upload')
 def upload_file_form():
-   return render_template('upload.html')
+    return render_template('upload.html')
+
 
 @app.post('/uploader')
 def upload_file():
-   if request.method == 'POST':
+    if request.method == 'POST':
         f = request.files['file']
         #   saves file to root directory
         # overwrites if have same name
         # f.save(f.filename)
         # try:
 
-        print("this is what f is",f.filename)
-        s3.upload_fileobj(f, os.environ["bucket_name"], f.filename,{"ContentDisposition":"inline",
-        "ContentType":"*"})
+        print("this is what f is", f.filename)
+        s3.upload_fileobj(f, os.environ["bucket_name"], f.filename, {"ContentDisposition": "inline",
+                                                                     "ContentType": "*"})
         # os.remove(f.filename)
         image = f"https://danielchrisrithmprojectfriender.s3.us-west-1.amazonaws.com/{f.filename}"
         print(image)
@@ -85,6 +93,8 @@ def upload_file():
         # return False
 
 # test route for creating a user
+
+
 @app.route('/newuser', methods=["GET", "POST"])
 def create_newuser():
     """Create a new user.
@@ -101,16 +111,17 @@ def create_newuser():
     email = request.form.get('email')
     password = request.form.get('password')
     file = request.files['file']
-    file.filename=username
+    file.filename = username
 
     image = f"https://danielchrisrithmprojectfriender.s3.us-west-1.amazonaws.com/{file.filename}"
     try:
-        user = User(username=username, email=email, password=bcrypt.generate_password_hash(password), image=image)
+        user = User(username=username, email=email,
+                    password=bcrypt.generate_password_hash(password), image=image)
         db.session.add(user)
-        db.session.commit() # this is where the error is happening
+        db.session.commit()  # this is where the error is happening
         print("this shouldn't be printed")
-        s3.upload_fileobj(file, os.environ["bucket_name"], file.filename,{"ContentDisposition":"inline",
-        "ContentType":"*"})
+        s3.upload_fileobj(file, os.environ["bucket_name"], file.filename, {"ContentDisposition": "inline",
+                                                                           "ContentType": "*"})
         return f"{username} was successfully created."
     except exc.IntegrityError:
         print("This should be printed")
@@ -129,7 +140,7 @@ def register():
     form = RegisterForm()
 
     if form.validate_on_submit():
-            
+
         # get the user data off the form
         username = request.form.get('username')
         password = request.form.get('password')
@@ -139,11 +150,12 @@ def register():
 
         try:
             # try adding the user
-            User.signup(username=username, email=email, password=password, image_url=image)
+            User.signup(username=username, email=email,
+                        password=password, image_url=image)
             db.session.commit()
             # add to AWS
-            s3.upload_fileobj(image, os.environ["bucket_name"], username,{"ContentDisposition":"inline",
-            "ContentType":"*"})
+            s3.upload_fileobj(image, os.environ["bucket_name"], username, {"ContentDisposition": "inline",
+                                                                           "ContentType": "*"})
             # create a token
             token = create_access_token(identity=username)
 
@@ -151,7 +163,8 @@ def register():
             return jsonify({"token": token})
         except IntegrityError:
             # TODO:
-            raise IntegrityError("Username or email already exists in database!")
+            raise IntegrityError(
+                "Username or email already exists in database!")
 
 
 @app.post("/login")
@@ -189,6 +202,20 @@ def login():
 
 
 ##############################################################################
+
+@app.get("/user/:username")
+def load_homepage(username):
+    """
+    List all the users with common hobbies
+    """
+    user = User.query(username=username)
+    potential_friends=User.users_with_common_hobbies_descending()
+
+    for friend in potential_friends:
+        friend_details = User.query(username=friend)
+
+
+
 ##############################################################################
 ##############################################################################
 ##############################################################################
