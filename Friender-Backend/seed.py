@@ -8,19 +8,22 @@ db.create_all()
 user1 = User(
     username= "john",
     email= "test@test.com",
-    password= "test"
+    password= "test",
+    image="https://danielchrisrithmprojectfriender.s3.us-west-1.amazonaws.com/code2.png"
 )
 
 user2 = User(
     username= "james",
     email= "test1@test.com",
-    password= "test1"
+    password= "test1",
+    image= "https://danielchrisrithmprojectfriender.s3.us-west-1.amazonaws.com/code3.png"
 )
 
 user3 = User(
     username= "jonathon",
     email= "test2@test.com",
-    password= "test2"
+    password= "test2",
+    image="https://danielchrisrithmprojectfriender.s3.us-west-1.amazonaws.com/code4.png"
 )
 
 

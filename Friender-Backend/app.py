@@ -3,6 +3,9 @@ from dotenv import load_dotenv
 import boto3
 s3_client = boto3.client('s3')
 from flask_bcrypt import Bcrypt
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import exc
+import sys
 
 # from werkzeug import secure_filename
 
@@ -21,8 +24,6 @@ from models import (
     User
 )
 
-
-
 load_dotenv()
 
 app = Flask(__name__)
@@ -34,17 +35,11 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
 
 
-app.config['S3_BUCKET'] = os.getenv("bucket_name")
-app.config['S3_KEY_ID'] = os.getenv("aws_access_key_id")
-app.config['S3_SECRET_KEY'] = os.getenv("aws_secret_access_key")
-
-
 connect_db(app)
 
 
 ################################################################# AWS IMPORTS
 
-# S3_BASE_URL = f'https://{S3_BUCKET}.s3.amazonaws.com/'
 
 s3 = boto3.client(
   "s3",
@@ -52,13 +47,6 @@ s3 = boto3.client(
   aws_access_key_id=os.environ['aws_access_key_id'],
   aws_secret_access_key=os.environ["aws_secret_access_key"],
 )
-
-# upload_file(file_name, bucket, object_name)
-
-
-
-
-
 
 ##############################################################################
 # TEST ROUTE FOR UPLOADING
@@ -74,6 +62,8 @@ def upload_file():
         # overwrites if have same name
         # f.save(f.filename)
         # try:
+
+        print("this is what f is",f.filename)
         s3.upload_fileobj(f, os.environ["bucket_name"], f.filename,{"ContentDisposition":"inline",
         "ContentType":"*"})
         # os.remove(f.filename)
@@ -87,27 +77,35 @@ def upload_file():
 # test route for creating a user
 @app.route('/newuser', methods=["GET", "POST"])
 def create_newuser():
-    """Create a new user, test..."""
+    """Create a new user.
+
+    Create new user and add detail to DB and image to Amazon. Redirect to hompage.
+    If username or picture exists is DB or AWS, return error.
+
+    """
 
     if request.method == 'GET':
         return render_template('newuser.html')
 
     username = request.form.get('username')
-    print(request.args)
     email = request.form.get('email')
     password = request.form.get('password')
     file = request.files['file']
+    file.filename=username
 
-    s3.upload_fileobj(file, os.environ["bucket_name"], file.filename,{"ContentDisposition":"inline",
-        "ContentType":"*"})
     image = f"https://danielchrisrithmprojectfriender.s3.us-west-1.amazonaws.com/{file.filename}"
-
-    user = User(username=username, email=email, password=bcrypt.generate_password_hash(password), image=image)
-    db.session.add(user)
-    db.session.commit()
-
-    return f"{username} was successfully created."
-
+    try:
+        user = User(username=username, email=email, password=bcrypt.generate_password_hash(password), image=image)
+        db.session.add(user)
+        db.session.commit() # this is where the error is happening
+        print("this shouldn't be printed")
+        s3.upload_fileobj(file, os.environ["bucket_name"], file.filename,{"ContentDisposition":"inline",
+        "ContentType":"*"})
+        return f"{username} was successfully created."
+    except exc.IntegrityError:
+        print("This should be printed")
+        sys.exit(1)
+    
 
 ##############################################################################
 
@@ -115,5 +113,5 @@ def create_newuser():
 def test():
 
     results = [u.serialize_user() for u in User.get_all_users()]
-    User.filter 
+    User.filter
     return jsonify(results)
