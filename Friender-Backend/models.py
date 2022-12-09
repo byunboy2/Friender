@@ -111,19 +111,18 @@ class User(db.Model):
     def users_with_common_hobbies_descending(self):
         counter = {}
         for hobby in self.hobbies:
-            users=hobby.users
+            users = hobby.users
             for user in users:
                 if user != self:
-                    counter[user.username] = counter.get(user.username,0)+1
+                    counter[user.username] = counter.get(user.username, 0)+1
 
-        sorted_users_by_frequency = sorted(counter.items(), key=lambda x:x[1], reverse=True)
+        sorted_users_by_frequency = sorted(
+            counter.items(), key=lambda x: x[1], reverse=True)
         converted_users = dict(sorted_users_by_frequency)
 
         return list(converted_users.keys())
 
- 
-
-    def caculate_distance_between_zip(zip1,zip2):
+    def caculate_distance_between_zip(zip1, zip2):
         """
         Find the distance between two zip codes
         """
@@ -137,10 +136,10 @@ class User(db.Model):
 
         # return False
 
-    # def serialize_user(self):
-    #   dict = self.__dict__
-    #   del dict["_sa_instance_state"]
-    #   return dict
+    def serialize_user(self):
+        dict = self.__dict__
+        del dict["_sa_instance_state"]
+        return dict
 
 ##############################################################################
 

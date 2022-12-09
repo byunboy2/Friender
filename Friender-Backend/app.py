@@ -63,7 +63,9 @@ s3 = boto3.client(
 
 @app.get('/test')
 def get_distance():
-    print(">>>>>>>>>> this is the distance",User.caculate_distance_between_zip(21206, 48237))
+    user = User.query.filter_by(username="james").all()
+    print(">>>>>>>>>>",user)
+    # print(">>>>>>>>>>" ,User.users_with_common_hobbies_descending(self=user))
     return "this was a test"
 
 
@@ -203,16 +205,30 @@ def login():
 
 ##############################################################################
 
-@app.get("/user/:username")
+@app.get("/user/<username>")
 def load_homepage(username):
     """
-    List all the users with common hobbies
+    List all the users with common hobbies with current user.
     """
-    user = User.query(username=username)
-    potential_friends=User.users_with_common_hobbies_descending()
+    user = User.query.get(username)
 
+    potential_friends=user.users_with_common_hobbies_descending()
+    print("potential_friends", potential_friends)
+    details = []
     for friend in potential_friends:
-        friend_details = User.query(username=friend)
+        friend_details = User.query.get(friend)
+        print("this is the list of hobbies",friend_details.hobbies)
+        test = friend_details.serialize_user()
+        print("this is the test",test)
+        test["hobbies"]=[]
+        print("these are the list of hobbies",friend_details.hobbies)
+        for h in friend_details.hobbies:
+            print("hobby",h)
+            test["hobbies"].append(h.code)
+        print("***********************",test)
+        details.append(test)
+
+    return jsonify(details)
 
 
 
