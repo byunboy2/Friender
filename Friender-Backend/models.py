@@ -3,7 +3,7 @@
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
 import requests
-import json
+from flask import (jsonify)
 
 bcrypt = Bcrypt()
 db = SQLAlchemy()
@@ -44,7 +44,6 @@ class User(db.Model):
         db.Text,
         nullable=True,
     )
-
 
     # location = db.Column(
     #   db.Integer,
@@ -120,6 +119,7 @@ class User(db.Model):
         current user in descending order.
         """
         counter = {}
+
         for hobby in self.hobbies:
             users = hobby.users
             for user in users:
@@ -130,7 +130,21 @@ class User(db.Model):
             counter.items(), key=lambda x: x[1], reverse=True)
         converted_users = dict(sorted_users_by_frequency)
 
-        return list(converted_users.keys())
+        potential_friends = list(converted_users.keys())
+        print("potential_friends",potential_friends)
+        details = []
+        for friend in converted_users:
+            friend_details = User.query.get(friend)
+            test = friend_details.serialize_user()
+            print("these are the test",test)
+            test["hobbies"] = []
+            for h in friend_details.hobbies:
+                print("these are the hobby",h)
+                test["hobbies"].append(h.code)
+            details.append(test)
+
+        return jsonify(details)
+
     @staticmethod
     def caculate_distance_between_zip(zip1, zip2):
         """
@@ -140,11 +154,6 @@ class User(db.Model):
         url = f'https://www.zipcodeapi.com/rest/{zipcodekey}/distance.json/{zip1}/{zip2}/mile'
         response = requests.get(url)
         return response.text
-
-        # if duplicate_user or duplicate_email or duplicate_image:
-        #   return True
-
-        # return False
 
     def serialize_user(self):
         """Serializes only column data."""

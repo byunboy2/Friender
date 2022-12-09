@@ -203,8 +203,8 @@ def login():
 
 ##############################################################################
 # features
-
-
+# 1. Return potential friends ranked by the distance
+# 2. Return potential friends having common hobbies ranked by frequency
 # match with users with same hobbies
 @app.get("/user/<username>")
 def load_homepage(username):
@@ -212,18 +212,8 @@ def load_homepage(username):
     List all the users with common hobbies with current user.
     """
     user = User.query.get(username)
+    return user.users_with_common_hobbies_descending()
 
-    potential_friends = user.users_with_common_hobbies_descending()
-    details = []
-    for friend in potential_friends:
-        friend_details = User.query.get(friend)
-        test = friend_details.serialize_user()
-        test["hobbies"] = []
-        for h in friend_details.hobbies:
-            test["hobbies"].append(h.code)
-        details.append(test)
-
-    return jsonify(details)
 
 # Returns users in different ranking of distance
 
@@ -235,16 +225,25 @@ def location(username):
     ascending.
     """
 
-    current_user = User.query.filter(username==username).first()
-    all_users = User.query.filter().all()
+    current_user = User.query.get(username)
+    all_users = User.query.all()
     details = []
-    users_by_distance=[]
-    for user in all_users:
-        if(user != current_user):
-            test["distance"].append(user.caculate_distance_between_zip(current_user.location,user.location))
-        users_by_distance.append(test)
 
-    return jsonify(users_by_distance)
+    for user in all_users:
+        print("this is the user details",user )
+        if(user != current_user):
+            friend_details = User.query.get(user.username)
+            test = friend_details.serialize_user()
+            distance_between_user = user.caculate_distance_between_zip(current_user.location,user.location)
+            test["distance"] = []
+            test["distance"].append(distance_between_user)
+            details.append(test)
+    return jsonify(details)
+    #          users_by_distance=[]
+    #         test["distance"].append(user.caculate_distance_between_zip(current_user.location,user.location))
+    #     users_by_distance.append(test)
+
+    # return jsonify(users_by_distance)
 
 
 
