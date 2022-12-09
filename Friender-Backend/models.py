@@ -45,11 +45,6 @@ class User(db.Model):
         nullable=True,
     )
 
-    # location = db.Column(
-    #   db.Integer,
-    #   db.ForeignKey('locations.zip')
-    # )
-
     # location = db.relationship("Location")
 
     hobbies = db.relationship(
@@ -57,23 +52,14 @@ class User(db.Model):
         secondary="user_hobbies",
         backref="users",
     )
-    # User 1: Biking, tennis
-    # u1.hobbies =
-    # users_with_same_hobbies = db.relationship(
-    #       "User",
-    #       secondary="user_hobbies",
-    #       primaryjoin=(UserHobbies.hobby_code == id),
-    #       secondaryjoin=(User.username == id),
-    #       backref="following",
-    #   )
-
-    #   followers = db.relationship(
-    #       "User",
-    #       secondary="follows",
-    #       primaryjoin=(Follows.user_being_followed_id == id),
-    #       secondaryjoin=(Follows.user_following_id == id),
-    #       backref="following",
-    #   )
+    
+    matches = db.relationship(
+        'User',
+        secondary='matches',
+        primaryjoin=(Match.username_matcher == username),
+        secondaryjoin=(Match.username_matchee == username),
+        backref='matcher'
+    )
 
     @classmethod
     def signup(cls, username, email, password, image_url=DEFAULT_IMAGE_URL):
@@ -198,22 +184,28 @@ class Hobby(db.Model):
 
 ##############################################################################
 
-#   """_summary_
+    """
+    
+        - one to many
+        - one user to many matches
+        - join table UserMatches
 
-#     user -> location >- users
-#   """
+    """ 
 
-# class Location(db.Model):
-#   """Location"""
+class Match(db.Model):
+    """Connection of a user <-- Match --> users"""
 
-#   __tablename__ = 'locations'
+    __tablename__ = 'matches'
 
-#   zip = db.Column(
-#     db.Integer,
-#     nullable=True,
-#     primary_key=True,
-#   )
+    username_matcher = db.Column(
+        db.Text,
+        db.ForeignKey('user.username')
+    )
 
+    username_matchee = db.Column(
+        db.Text,
+        db.ForeignKey('user.username')
+    )
 
 ##############################################################################
 

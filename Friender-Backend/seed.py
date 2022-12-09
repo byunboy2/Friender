@@ -1,5 +1,5 @@
 from app import app
-from models import db, User, UserHobbies, Hobby
+from models import db, User, UserHobbies, Hobby, Match
 
 db.drop_all()
 db.create_all()
@@ -141,4 +141,25 @@ user_hobby8 = UserHobbies(
 
 db.session.add_all([user_hobby1, user_hobby2, user_hobby3, user_hobby4,
                    user_hobby5, user_hobby6, user_hobby7, user_hobby8])
+db.session.commit()
+
+m1 = Match(username_matcher='john', username_matchee='james')
+
+m2 = Match(username_matcher='john', username_matchee='jonathan')
+
+m3 = Match(username_matcher='john', username_matchee='jesse')
+
+m4 = Match(username_matcher='james', username_matchee='jesse')
+
+"""
+    john    -> james
+            -> jonathan
+            -> jesse
+            
+    
+    james   -> jesse
+
+"""
+
+db.session.add_all([m1, m2, m3, m4])
 db.session.commit()

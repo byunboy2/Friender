@@ -15,7 +15,7 @@ from flask_bcrypt import Bcrypt
 import os
 from dotenv import load_dotenv
 import boto3
-from flask_jwt_extended import (JWTManager, create_access_token)
+from flask_jwt_extended import (JWTManager, create_access_token, jwt_required)
 from datetime import timedelta
 
 s3_client = boto3.client('s3')
@@ -57,80 +57,6 @@ s3 = boto3.client(
     aws_access_key_id=os.environ['aws_access_key_id'],
     aws_secret_access_key=os.environ["aws_secret_access_key"],
 )
-
-##############################################################################
-# TEST ROUTE FOR UPLOADING
-
-
-@app.get('/test')
-def get_distance():
-    user = User.query.filter_by(username="james").all()
-    print(">>>>>>>>>>", user)
-    # print(">>>>>>>>>>" ,User.users_with_common_hobbies_descending(self=user))
-    return "this was a test"
-
-
-@app.get('/upload')
-def upload_file_form():
-    return render_template('upload.html')
-
-
-@app.post('/uploader')
-def upload_file():
-    if request.method == 'POST':
-        f = request.files['file']
-        #   saves file to root directory
-        # overwrites if have same name
-        # f.save(f.filename)
-        # try:
-
-        print("this is what f is", f.filename)
-        s3.upload_fileobj(f, os.environ["bucket_name"], f.filename, {"ContentDisposition": "inline",
-                                                                     "ContentType": "*"})
-        # os.remove(f.filename)
-        image = f"https://danielchrisrithmprojectfriender.s3.us-west-1.amazonaws.com/{f.filename}"
-        print(image)
-        return 'file uploaded successfully'
-        # except ClientError as e:
-        #     logging.error(e)
-        # return False
-
-# test route for creating a user
-
-
-@app.route('/newuser', methods=["GET", "POST"])
-def create_newuser():
-    """Create a new user.
-
-    Create new user and add detail to DB and image to Amazon. Redirect to hompage.
-    If username or picture exists is DB or AWS, return error.
-
-    """
-
-    if request.method == 'GET':
-        return render_template('newuser.html')
-
-    username = request.form.get('username')
-    email = request.form.get('email')
-    password = request.form.get('password')
-    file = request.files['file']
-    file.filename = username
-
-    image = f"https://danielchrisrithmprojectfriender.s3.us-west-1.amazonaws.com/{file.filename}"
-    try:
-        user = User(username=username, email=email,
-                    password=bcrypt.generate_password_hash(password), image=image)
-        db.session.add(user)
-        db.session.commit()  # this is where the error is happening
-        print("this shouldn't be printed")
-        s3.upload_fileobj(file, os.environ["bucket_name"], file.filename, {"ContentDisposition": "inline",
-                                                                           "ContentType": "*"})
-        return f"{username} was successfully created."
-    except exc.IntegrityError:
-        print("This should be printed")
-        sys.exit(1)
-
-##############################################################################
 
 ##############################################################################
 # login/register/logout
@@ -197,16 +123,19 @@ def login():
 
 
 ##############################################################################
-# all other routes / protected routes
-# all other routes need @jwt_required
+
 
 
 ##############################################################################
+# all other routes need @jwt_required
+
 # features
 # 1. Return potential friends ranked by the distance
 # 2. Return potential friends having common hobbies ranked by frequency
 # match with users with same hobbies
+
 @app.get("/user/<username>")
+# @jwt_required
 def load_homepage(username):
     """
     List all the users with common hobbies with current user.
@@ -219,6 +148,7 @@ def load_homepage(username):
 
 
 @app.get("/user/<username>/location")
+# @jwt_required
 def location(username):
     """
     Takes current user and returns users in the vicinity ordered by distance
@@ -247,27 +177,8 @@ def location(username):
 
 
 
-#   potential_friends = user.users_with_common_hobbies_descending()
-#     details = []
-#     for friend in potential_friends:
-#         friend_details = User.query.get(friend)
-#         test = friend_details.serialize_user()
-#         test["hobbies"] = []
-#         for h in friend_details.hobbies:
-#             test["hobbies"].append(h.code)
-#         details.append(test)
-
-#     return jsonify(details)
-
-##############################################################################
 ##############################################################################
 ##############################################################################
 ##############################################################################
 ##############################################################################
 
-@app.get('/')
-def test():
-
-    results = [u.serialize_user() for u in User.get_all_users()]
-    User.filter
-    return jsonify(results)
