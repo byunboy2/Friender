@@ -7,6 +7,7 @@ from forms import LoginForm, RegisterForm
 from flask import (
     Flask, request, redirect, session, g, jsonify, render_template
 )
+from werkzeug.exceptions import Unauthorized
 import sys
 from sqlalchemy import exc
 from sqlalchemy.exc import IntegrityError
@@ -64,7 +65,7 @@ s3 = boto3.client(
 @app.get('/test')
 def get_distance():
     user = User.query.filter_by(username="james").all()
-    print(">>>>>>>>>>",user)
+    print(">>>>>>>>>>", user)
     # print(">>>>>>>>>>" ,User.users_with_common_hobbies_descending(self=user))
     return "this was a test"
 
@@ -190,12 +191,9 @@ def login():
             if user:
                 token = create_access_token(identity=username)
                 return jsonify({"token": token})
-
+        except Unauthorized:
             # TODO:
-            return "Username and/or password is not a match"
-        except Exception:
-            # TODO:
-            raise Exception("Invalid credentials.")
+            raise Unauthorized("Invalid credentials.")
 
 
 ##############################################################################
@@ -204,7 +202,10 @@ def login():
 
 
 ##############################################################################
+# features
 
+
+# match with users with same hobbies
 @app.get("/user/<username>")
 def load_homepage(username):
     """
@@ -212,25 +213,52 @@ def load_homepage(username):
     """
     user = User.query.get(username)
 
-    potential_friends=user.users_with_common_hobbies_descending()
-    print("potential_friends", potential_friends)
+    potential_friends = user.users_with_common_hobbies_descending()
     details = []
     for friend in potential_friends:
         friend_details = User.query.get(friend)
-        print("this is the list of hobbies",friend_details.hobbies)
         test = friend_details.serialize_user()
-        print("this is the test",test)
-        test["hobbies"]=[]
-        print("these are the list of hobbies",friend_details.hobbies)
+        test["hobbies"] = []
         for h in friend_details.hobbies:
-            print("hobby",h)
             test["hobbies"].append(h.code)
-        print("***********************",test)
         details.append(test)
 
     return jsonify(details)
 
+# Returns users in different ranking of distance
 
+
+@app.get("/user/<username>/location")
+def location(username):
+    """
+    Takes current user and returns users in the vicinity ordered by distance
+    ascending.
+    """
+
+    current_user = User.query.filter(username==username).first()
+    all_users = User.query.filter().all()
+    details = []
+    users_by_distance=[]
+    for user in all_users:
+        if(user != current_user):
+            test["distance"].append(user.caculate_distance_between_zip(current_user.location,user.location))
+        users_by_distance.append(test)
+
+    return jsonify(users_by_distance)
+
+
+
+#   potential_friends = user.users_with_common_hobbies_descending()
+#     details = []
+#     for friend in potential_friends:
+#         friend_details = User.query.get(friend)
+#         test = friend_details.serialize_user()
+#         test["hobbies"] = []
+#         for h in friend_details.hobbies:
+#             test["hobbies"].append(h.code)
+#         details.append(test)
+
+#     return jsonify(details)
 
 ##############################################################################
 ##############################################################################

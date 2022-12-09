@@ -40,6 +40,12 @@ class User(db.Model):
         nullable=True,
     )
 
+    location = db.Column(
+        db.Text,
+        nullable=True,
+    )
+
+
     # location = db.Column(
     #   db.Integer,
     #   db.ForeignKey('locations.zip')
@@ -109,6 +115,10 @@ class User(db.Model):
         return False
 
     def users_with_common_hobbies_descending(self):
+        """
+        Return a frequency counter of users that have a common hobby with
+        current user in descending order.
+        """
         counter = {}
         for hobby in self.hobbies:
             users = hobby.users
@@ -121,7 +131,7 @@ class User(db.Model):
         converted_users = dict(sorted_users_by_frequency)
 
         return list(converted_users.keys())
-
+    @staticmethod
     def caculate_distance_between_zip(zip1, zip2):
         """
         Find the distance between two zip codes
@@ -137,9 +147,8 @@ class User(db.Model):
         # return False
 
     def serialize_user(self):
-        dict = self.__dict__
-        del dict["_sa_instance_state"]
-        return dict
+        """Serializes only column data."""
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 ##############################################################################
 
