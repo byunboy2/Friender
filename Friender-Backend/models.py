@@ -1,4 +1,4 @@
-"""SQLAlchemy models for Friender2."""
+"""SQLAlchemy models for Friender."""
 
 from flask_bcrypt import Bcrypt
 from flask_sqlalchemy import SQLAlchemy
@@ -9,6 +9,37 @@ bcrypt = Bcrypt()
 db = SQLAlchemy()
 
 DEFAULT_IMAGE_URL = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png"
+
+##############################################################################
+
+"""
+
+        - one to many
+        - one user to many matches
+        - join table UserMatches
+
+    """
+
+
+class Match(db.Model):
+    """Connection of a user <-- Match --> users"""
+
+    __tablename__ = 'matches'
+
+    username_matcher = db.Column(
+        db.Text,
+        db.ForeignKey('users.username',ondelete="cascade"),
+        nullable=False,
+        primary_key=True,
+    )
+
+    username_matchee = db.Column(
+        db.Text,
+        db.ForeignKey('users.username',ondelete="cascade"),
+        nullable=False,
+        primary_key=True,
+    )
+
 
 ##############################################################################
 
@@ -45,24 +76,23 @@ class User(db.Model):
         nullable=True,
     )
 
-    # location = db.relationship("Location")
-
     hobbies = db.relationship(
         "Hobby",
         secondary="user_hobbies",
         backref="users",
     )
-    
-    matches = db.relationship(
+
+    matchee = db.relationship(
         'User',
         secondary='matches',
         primaryjoin=(Match.username_matcher == username),
         secondaryjoin=(Match.username_matchee == username),
-        backref='matcher'
+        backref='matches'
     )
 
-    @classmethod
-    def signup(cls, username, email, password, image_url=DEFAULT_IMAGE_URL):
+
+    @ classmethod
+    def signup(cls, username, email, password, image=DEFAULT_IMAGE_URL):
         """Sign up user.
 
         Hashes password and adds user to system.
@@ -74,7 +104,7 @@ class User(db.Model):
             username=username,
             password=hashed_pwd,
             email=email,
-            image_url=image_url,
+            image=image,
         )
 
         db.session.add(user)
@@ -117,15 +147,15 @@ class User(db.Model):
         converted_users = dict(sorted_users_by_frequency)
 
         potential_friends = list(converted_users.keys())
-        print("potential_friends",potential_friends)
+        print("potential_friends", potential_friends)
         details = []
         for friend in converted_users:
             friend_details = User.query.get(friend)
             test = friend_details.serialize_user()
-            print("these are the test",test)
+            print("these are the test", test)
             test["hobbies"] = []
             for h in friend_details.hobbies:
-                print("these are the hobby",h)
+                print("these are the hobby", h)
                 test["hobbies"].append(h.code)
             details.append(test)
 
@@ -181,31 +211,6 @@ class Hobby(db.Model):
         primary_key=True,
     )
 
-
-##############################################################################
-
-    """
-    
-        - one to many
-        - one user to many matches
-        - join table UserMatches
-
-    """ 
-
-class Match(db.Model):
-    """Connection of a user <-- Match --> users"""
-
-    __tablename__ = 'matches'
-
-    username_matcher = db.Column(
-        db.Text,
-        db.ForeignKey('user.username')
-    )
-
-    username_matchee = db.Column(
-        db.Text,
-        db.ForeignKey('user.username')
-    )
 
 ##############################################################################
 

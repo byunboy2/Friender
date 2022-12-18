@@ -145,21 +145,23 @@ db.session.commit()
 
 m1 = Match(username_matcher='john', username_matchee='james')
 
-m2 = Match(username_matcher='john', username_matchee='jonathan')
+m2 = Match(username_matcher='james', username_matchee='chris')
 
 m3 = Match(username_matcher='john', username_matchee='jesse')
 
 m4 = Match(username_matcher='james', username_matchee='jesse')
 
+m5 = Match(username_matcher='jesse', username_matchee='james')
+
 """
     john    -> james
             -> jonathan
             -> jesse
-            
-    
+
+
     james   -> jesse
 
 """
 
-db.session.add_all([m1, m2, m3, m4])
+db.session.add_all([m1, m3, m4, m2, m5, m6])
 db.session.commit()

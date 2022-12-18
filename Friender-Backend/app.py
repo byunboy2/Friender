@@ -68,32 +68,30 @@ def register():
 
     form = RegisterForm()
 
-    if form.validate_on_submit():
+    # if form.validate_on_submit():
 
-        # get the user data off the form
-        username = request.form.get('username')
-        password = request.form.get('password')
-        email = request.form.get('email')
-        # get the image file
-        image = request.files['image']
+    # get the user data off the form
+    username = request.form.get('username')
+    password = request.form.get('password')
+    email = request.form.get('email')
+    # get the image file
+    image = request.files['image']
+    image_url= f"https://danielchrisrithmprojectfriender.s3.us-west-1.amazonaws.com/{username}"
+    try:
+        # try adding the user
+        User.signup(username=username, email=email,
+                    password=password, image=image_url)
+        db.session.commit()
+        # add to AWS
+        s3.upload_fileobj(image, os.environ["bucket_name"], username, {"ContentDisposition": "inline",
+                                                                       "ContentType": "*"})
+        # create a token
+        token = create_access_token(identity=username)
 
-        try:
-            # try adding the user
-            User.signup(username=username, email=email,
-                        password=password, image_url=image)
-            db.session.commit()
-            # add to AWS
-            s3.upload_fileobj(image, os.environ["bucket_name"], username, {"ContentDisposition": "inline",
-                                                                           "ContentType": "*"})
-            # create a token
-            token = create_access_token(identity=username)
-
-            # return the token
-            return jsonify({"token": token})
-        except IntegrityError:
-            # TODO:
-            raise IntegrityError(
-                "Username or email already exists in database!")
+        # return the token
+        return jsonify({"token": token})
+    except IntegrityError:
+        return jsonify({"error": "Username or email already exists in database!"})
 
 
 @app.post("/login")
@@ -105,34 +103,17 @@ def login():
     if form.validate_on_submit():
 
         try:
-            # get the user info
             username = request.form.get('username')
             password = request.form.get('password')
             user = User.authenticate(username=username, password=password)
-            # check that user exists
-            # user = User.query.filter_by(username=username).first()
-            # compare the password against the hashed password
-            # is_auth = bcrypt.check_password_hash(user.password, password)
-            # return the token
             if user:
                 token = create_access_token(identity=username)
                 return jsonify({"token": token})
         except Unauthorized:
-            # TODO:
             raise Unauthorized("Invalid credentials.")
 
 
 ##############################################################################
-
-
-
-##############################################################################
-# all other routes need @jwt_required
-
-# features
-# 1. Return potential friends ranked by the distance
-# 2. Return potential friends having common hobbies ranked by frequency
-# match with users with same hobbies
 
 @app.get("/user/<username>")
 # @jwt_required
@@ -160,25 +141,20 @@ def location(username):
     details = []
 
     for user in all_users:
-        print("this is the user details",user )
-        if(user != current_user):
+        if (user != current_user):
             friend_details = User.query.get(user.username)
             test = friend_details.serialize_user()
-            distance_between_user = user.caculate_distance_between_zip(current_user.location,user.location)
+            distance_between_user = user.caculate_distance_between_zip(
+                current_user.location, user.location)
             test["distance"] = []
             test["distance"].append(distance_between_user)
             details.append(test)
     return jsonify(details)
-    #          users_by_distance=[]
-    #         test["distance"].append(user.caculate_distance_between_zip(current_user.location,user.location))
-    #     users_by_distance.append(test)
-
-    # return jsonify(users_by_distance)
-
 
 
 ##############################################################################
-##############################################################################
-##############################################################################
-##############################################################################
+# chatting features
 
+@app.route('/chat')
+def chat():
+    return render_template('chat.html')
