@@ -153,13 +153,14 @@ m4 = Match(username_matcher='james', username_matchee='jesse')
 
 m5 = Match(username_matcher='jesse', username_matchee='james')
 
+m6 = Match(username_matcher='daniel', username_matchee='chris')
+
 """
     john    -> james
             -> jonathan
             -> jesse
-
-
     james   -> jesse
+    daniel  -> chris 
 
 """
 

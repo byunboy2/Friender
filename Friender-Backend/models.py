@@ -11,15 +11,11 @@ db = SQLAlchemy()
 DEFAULT_IMAGE_URL = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png"
 
 ##############################################################################
-
-"""
-
+""""
         - one to many
         - one user to many matches
         - join table UserMatches
-
-    """
-
+"""
 
 class Match(db.Model):
     """Connection of a user <-- Match --> users"""
@@ -146,16 +142,16 @@ class User(db.Model):
             counter.items(), key=lambda x: x[1], reverse=True)
         converted_users = dict(sorted_users_by_frequency)
 
-        potential_friends = list(converted_users.keys())
-        print("potential_friends", potential_friends)
+        # potential_friends = list(converted_users.keys())
+
         details = []
         for friend in converted_users:
             friend_details = User.query.get(friend)
             test = friend_details.serialize_user()
-            print("these are the test", test)
+
             test["hobbies"] = []
             for h in friend_details.hobbies:
-                print("these are the hobby", h)
+
                 test["hobbies"].append(h.code)
             details.append(test)
 
@@ -176,10 +172,10 @@ class User(db.Model):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 ##############################################################################
-
-
 class UserHobbies(db.Model):
-    """Join table between users and hobbies"""
+    """
+    Join table between users and hobbies
+    """
 
     __tablename__ = 'user_hobbies'
 

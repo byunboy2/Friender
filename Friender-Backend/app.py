@@ -151,10 +151,17 @@ def location(username):
             details.append(test)
     return jsonify(details)
 
-
 ##############################################################################
-# chatting features
 
-@app.route('/chat')
+@app.get("/user/<username>/chat")
 def chat():
-    return render_template('chat.html')
+    return render_template("chat.html")
+
+
+
+    @app.route('/chat')
+def chat():
+  return render_template('chat.html')
+
+if __name__ == '__main__':
+  app.run()
